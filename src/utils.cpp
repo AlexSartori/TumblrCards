@@ -6,23 +6,50 @@
  */
 
 #include <string>
-#include <sys/ioctl.h>
 #include <iostream>
-#include <unistd.h>
 #include <cstdlib>
 #include "utils.h"
 
+#ifdef WINDOWS
+#include <windows.h>
+#else
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
+
 using namespace std;
 
-void clear_console() {
-#ifdef WINDOWS
-  std::system ("CLS");
-#else
-  std::system ("clear");
-#endif
+void print_center(string s) {
+	string pad = "";
+	int k = (get_console_width() / 2) - (s.length() / 2);
+
+	for (int i = 0; i < k; i++)
+		pad.append(" ");
+	cout << pad << s;
 }
 
-// TODO Make it work in Windows too and fix cases where 0 and 0 are returned
+
+#ifdef WINDOWS
+void clear_console() {
+  std::system ("CLS");
+}
+
+int get_console_width() {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+}
+
+int get_console_height() {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+}
+#else
+
+void clear_console() {
+  std::system ("clear");
+}
 
 int get_console_width() {
 	struct winsize size;
@@ -35,12 +62,5 @@ int get_console_height() {
 	ioctl(STDOUT_FILENO,TIOCGWINSZ,&size);
 	return size.ws_row;
 }
+#endif
 
-void print_center(string s) {
-	string pad = "";
-	int k = (get_console_width() / 2) - (s.length() / 2);
-
-	for (int i = 0; i < k; i++)
-		pad.append(" ");
-	cout << pad << s;
-}
